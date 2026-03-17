@@ -4,18 +4,18 @@ import Combine
 struct ContentView: View {
     @StateObject var game = MahjongGame()
     
-    // Core Layout Constants
-    let gridWidth: Double = 14.0
-    let gridHeight: Double = 9.0
+    // Core Layout Constants for Mobile (Simplified grid)
+    let gridWidth: Double = 6.0
+    let gridHeight: Double = 6.0
     
     var body: some View {
         GeometryReader { geometry in
-            let availableWidth = geometry.size.width - 40
-            let availableHeight = geometry.size.height - 150
+            let availableWidth = geometry.size.width - 60
+            let availableHeight = geometry.size.height - 180
             
             let scaleX = availableWidth / CGFloat(gridWidth)
             let scaleY = availableHeight / CGFloat(gridHeight)
-            let scale = min(scaleX, scaleY, 45)
+            let scale = min(scaleX, scaleY, 60)
             
             let tileWidth = scale
             let tileHeight = scale * 1.35
@@ -25,34 +25,32 @@ struct ContentView: View {
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Mahjong Solitaire")
-                            .font(.system(.title2, design: .rounded, weight: .bold))
-                        Text("Matched: \(game.matchedCount)")
-                            .font(.subheadline)
+                            .font(.system(.title, design: .rounded, weight: .bold))
+                        Text("Matched: \(game.matchedCount) / 56")
+                            .font(.headline)
                             .foregroundColor(.secondary)
                     }
                     Spacer()
                     
                     HStack(spacing: 20) {
-                        // Hint Button
                         Button(action: { game.findHint() }) {
                             VStack {
                                 Image(systemName: "lightbulb.fill")
                                     .font(.title)
                                     .foregroundColor(.yellow)
                                 Text("Hint")
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
                         
-                        // New Game Button
                         Button(action: { game.startNewGame() }) {
                             VStack {
                                 Image(systemName: "arrow.counterclockwise.circle.fill")
                                     .font(.title)
                                     .foregroundColor(.green)
                                 Text("New")
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -63,9 +61,9 @@ struct ContentView: View {
                 
                 // Game Board
                 ZStack {
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(Color(red: 0.1, green: 0.4, blue: 0.2))
-                        .shadow(radius: 10)
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(Color(red: 0.1, green: 0.35, blue: 0.15))
+                        .shadow(radius: 15)
                         .padding(5)
                     
                     ZStack {
@@ -78,25 +76,64 @@ struct ContentView: View {
                                 size: CGSize(width: tileWidth, height: tileHeight)
                             )
                             .position(
-                                x: CGFloat(tile.position.x - 5.5) * (tileWidth + 2) + (geometry.size.width / 2),
-                                y: CGFloat(tile.position.y - 3.5) * (tileHeight * 0.8) + (availableHeight / 2)
+                                x: CGFloat(tile.position.x - 2.5) * (tileWidth + 4) + (geometry.size.width / 2),
+                                y: CGFloat(tile.position.y - 2.5) * (tileHeight * 0.8) + (availableHeight / 2)
                             )
                             .offset(
-                                x: CGFloat(tile.position.z) * -3,
-                                y: CGFloat(tile.position.z) * -3
+                                x: CGFloat(tile.position.z) * -4,
+                                y: CGFloat(tile.position.z) * -4
                             )
                             .onTapGesture {
-                                game.selectTile(tile)
+                                withAnimation {
+                                    game.selectTile(tile)
+                                }
                             }
                         }
+                    }
+                    
+                    // Win / Stuck States
+                    if game.isGameOver {
+                        StatusOverlay(title: "YOU WIN!", color: .yellow) { game.startNewGame() }
+                    } else if game.isNoMovesLeft {
+                        StatusOverlay(title: "STUCK!", subtitle: "No more moves left", color: .red) { game.startNewGame() }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
-                Spacer().frame(height: 20)
+                Spacer().frame(height: 30)
             }
         }
         .edgesIgnoringSafeArea(.bottom)
+    }
+}
+
+struct StatusOverlay: View {
+    let title: String
+    var subtitle: String? = nil
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text(title)
+                .font(.system(size: 48, weight: .black, design: .rounded))
+                .foregroundColor(color)
+                .shadow(radius: 10)
+            
+            if let sub = subtitle {
+                Text(sub)
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            
+            Button("New Game") { action() }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+                .controlSize(.large)
+        }
+        .padding(40)
+        .background(Color.black.opacity(0.85))
+        .cornerRadius(30)
     }
 }
 
@@ -105,4 +142,3 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
-

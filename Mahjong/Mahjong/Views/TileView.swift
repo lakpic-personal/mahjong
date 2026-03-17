@@ -7,7 +7,7 @@ struct TileView: View {
     var isHinted: Bool = false
     var size: CGSize = CGSize(width: 32, height: 44)
     
-    @State private var pulseScale: CGFloat = 1.0
+    @State private var pulseOpacity: Double = 0.2
     
     var body: some View {
         ZStack {
@@ -22,11 +22,11 @@ struct TileView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(
-                            isHinted ? Color.yellow : (isSelected ? Color.orange : Color.gray.opacity(0.4)), 
-                            lineWidth: (isHinted || isSelected) ? 3 : 1
+                            isSelected ? Color.orange : Color.gray.opacity(0.4), 
+                            lineWidth: isSelected ? 3 : 1
                         )
                 )
-                .shadow(color: isHinted ? Color.yellow.opacity(0.8) : Color.black.opacity(0.2), radius: (isHinted || isSelected) ? 10 : 2)
+                .shadow(radius: isSelected ? 10 : 2)
             
             // Symbol
             Text(tile.type.symbol)
@@ -34,25 +34,24 @@ struct TileView: View {
                 .foregroundColor(symbolColor)
                 .minimumScaleFactor(0.4)
                 .padding(2)
+            
+            // Hint Overlay (Two tiles should pulsate)
+            if isHinted {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.yellow.opacity(pulseOpacity))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.yellow, lineWidth: 3)
+                    )
+                    .onAppear {
+                        withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                            pulseOpacity = 0.6
+                        }
+                    }
+            }
         }
         .frame(width: size.width, height: size.height)
-        .scaleEffect(isSelected ? 1.15 : (isHinted ? pulseScale : 1.0))
-        .onAppear {
-            if isHinted {
-                withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-                    pulseScale = 1.1
-                }
-            }
-        }
-        .onChange(of: isHinted) { newValue in
-            if newValue {
-                withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-                    pulseScale = 1.1
-                }
-            } else {
-                pulseScale = 1.0
-            }
-        }
+        .scaleEffect(isSelected ? 1.15 : (isHinted ? 1.05 : 1.0))
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
     }
     
@@ -75,4 +74,3 @@ struct TileView: View {
         }
     }
 }
-
